@@ -1,33 +1,31 @@
 import streamlit as st
 import numpy as np
+from PIL import Image
 import cv2
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
-import av
 
-st.title("🛡 AI Deepfake Detection System (Live Webcam)")
+st.set_page_config(page_title="Deepfake Detection", layout="centered")
 
-class VideoProcessor(VideoProcessorBase):
-    def recv(self, frame):
-        img = frame.to_ndarray(format="bgr24")
+st.title("🛡 AI Deepfake Detection System")
+st.write("Capture image from webcam and detect if it is Real or Fake")
 
-        # Resize for model
-        resized = cv2.resize(img, (128,128))
-        resized = resized / 255.0
+# Webcam capture
+img_file = st.camera_input("Take a picture")
 
-        # Simulated prediction
-        prediction = np.random.rand()
+if img_file is not None:
+    # Convert to image
+    image = Image.open(img_file)
+    st.image(image, caption="Captured Image", use_column_width=True)
 
-        if prediction > 0.5:
-            label = "FAKE"
-            color = (0,0,255)
-        else:
-            label = "REAL"
-            color = (0,255,0)
+    # Preprocess image
+    img = np.array(image.resize((128,128)))
+    img = img / 255.0
+    img = np.reshape(img, (1,128,128,3))
 
-        cv2.putText(img, label, (20,50),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1, color, 3)
+    # Simulated prediction (replace with real model later)
+    prediction = np.random.rand()
 
-        return av.VideoFrame.from_ndarray(img, format="bgr24")
+    if prediction > 0.5:
+        st.error(f"🔴 FAKE ({prediction*100:.2f}%)")
+    else:
+        st.success(f"🟢 REAL ({(1-prediction)*100:.2f}%)")
 
-webrtc_streamer(key="example", video_processor_factory=VideoProcessor)
